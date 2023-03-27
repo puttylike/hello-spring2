@@ -1,46 +1,54 @@
 package hello.hellospring.repository;
 
-import hello.hellospring.domain.Member;
+import hello.hellospring.domain.Member; // Member Class를 import했다.
 
-import javax.swing.text.html.Option;
 import java.util.*;
 
-public class MemoryMemberRepository implements MemberRepositroy{
+// MemberRepository Interface를 구현할 클래스를 만들자
+public class MemoryMemberRepository implements MemberRepository{    // Ait + Enter 로 Interface에 있는 모든 메소드들을 가져올 수 있다.
 
-    public void clearStore(){
+    // 데이터를 저장할 공간을 만들자
+    private static Map<Long, Member> store = new HashMap<>();
+    private static long sequence = 0L;
+
+    @Override
+    // 회원 저장 메소드
+    public Member save(Member member) {     // member 객체 안에 name은 저장되어 넘어온 것이라 보면 된다.
+        member.setId(++sequence);   // member 객체의 id에 시퀀스를 1증가시켜 저장
+        store.put(member.getId(), member);
+        // Map<Long, Member>타입의 Long자리에 1증가시켰던 시퀀스를,
+        // Member자리에 member객체를 저장한다. (1증가된 시퀀스와, 원래 있던 이름이 있음)
+
+        return member;  // 그리고 member 객체를 반환한다.
+    }
+
+    @Override
+    // id로 회원 찾는 메서드 -> Optional<Member>으로 반환한다.
+    public Optional<Member> findById(Long id) {
+        return Optional.ofNullable(store.get(id));
+        //Null이 반환될 가능성이 있으면 Optional.ofNullable()로 감싸준다
+    }
+
+    @Override
+    // name으로 회원 찾는 메서드 -> Optional<Member>으로 반환한다.
+    public Optional<Member> findByName(String name) {
+        return store.values().stream().filter(member -> member.getName().equals(name))
+                .findAny();
+        // member객체에 있는 name이랑 매개변수로 넘어온 name이 같은지 확인하여
+        // 일치하는 경우에만 필터링이 되고, 그 중에서 Member객체를 찾으면 반환이 된다.
+        // 찾았는데 없으면 Optional에 null이 포함되어 반환된다.
+    }
+
+    @Override
+    // 모든 회원 List를 조회하는 메소드 -> List<Member>로 반환한다.
+    public List<Member> findAll() {
+        return new ArrayList<>(store.values());
+        // 리스트를 많이 쓴다. 위처럼 반환하면 된다.
+        // values()는 member다.
+    }
+
+    // store객체를 비우도록 하는 메소드
+    public void clearStore() {
         store.clear();
     }
-
-    private static Map<Long, Member> store = new HashMap<>();
-    private static long sequence = 0L;// 키값생성 멤버가 새로 저장될수록 값이 1씩 증가합니다.
-
-    @Override
-    public Member save(Member member) {
-        member.setId(++sequence);// 저장할 때마다 id값을 증가시킵니다
-        store.put(member.getId(),member);//member 객체에 저장된 id값과 member객체를 map객체에 넣습니다.
-        return member; // 상황에따라 member를 반환합니다.
-    }
-
-    @Override
-    public Optional<Member> findById(Long id) {
-        //ofNullable함수는 안에 감싸고 있는 store.get()함수가 null을 반환할 경우 empty Optional 객체를 생성합니다.
-        //그리고 return을 통해 반환됩니다.
-        return Optional.ofNullable(store.get(id));
-    }
-
-    @Override
-    public Optional<Member> findByName(String name) {
-        //.stream.filter.findAny()는 findFirst()와 달리 순서와 관계없이 먼저 찾아지는 객체를 리턴합니다.
-        //.stream.filter()는 함수식 안에있는 요소드들을 새로운 스트림으로 반환하는 Stream API입니다.
-        //.stream()는 stream 객체를 말합니다.
-        return store.values().stream()
-                .filter(member -> member.getName().equals(name))
-                .findAny();
-    }
-
-    @Override
-    public List<Member> findAll() {
-        //ArrayList형태로 Member값들을 넣고 반환합니다.
-        return new ArrayList<>(store.values());
-    }
-}
+} // 이제 이것이 잘 동작하는지 확인하기 위해 testcase를 작성한다.
